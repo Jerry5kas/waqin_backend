@@ -1,0 +1,43 @@
+name: SonarCloud Analysis
+
+on:
+  push:
+    branches:
+      - non-prod
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonarcloud:
+    name: Analyze Laravel Code with SonarCloud
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+          extensions: mbstring, xml, bcmath, intl, curl, dom, pdo, pdo_mysql, zip
+          coverage: xdebug
+
+      - name: Install dependencies
+        run: |
+          composer install --no-progress --no-suggest
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run tests with coverage
+        run: |
+          ./vendor/bin/phpunit --coverage-clover=coverage.xml
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        with:
+          projectBaseDir: .
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: waqin_waqin-backend
+          SONAR_ORGANIZATION: waqin

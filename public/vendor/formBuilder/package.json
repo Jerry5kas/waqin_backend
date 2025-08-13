@@ -1,0 +1,234 @@
+{
+  "name": "formBuilder",
+  "version": "3.19.1",
+  "main": "dist/form-builder.min.js",
+  "homepage": "https://formbuilder.online/",
+  "repository": {
+    "url": "https://github.com/kevinchappell/formBuilder.git",
+    "type": "git"
+  },
+  "files": [
+    "dist/**/*",
+    "docs/**/*",
+    "src/**/*"
+  ],
+  "author": "Kevin Chappell <kevin.b.chappell@gmail.com>",
+  "contributors": [],
+  "bugs": "https://github.com/kevinchappell/formBuilder/issues",
+  "description": "A jQuery plugin for drag and drop form building",
+  "keywords": [
+    "jquery-plugin",
+    "forms",
+    "drag and drop",
+    "form builder",
+    "form create"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/*",
+    "node_modules",
+    "test"
+  ],
+  "config": {
+    "files": {
+      "test": [
+        "test/**/*.spec.js"
+      ],
+      "pluginsDir": "src/js/control_plugins/",
+      "fonts": "src/fonts",
+      "sass": "src/sass",
+      "formBuilder": {
+        "js": "src/js/form-builder.js",
+        "sass": [
+          "src/sass/form-builder.scss"
+        ]
+      },
+      "formRender": {
+        "js": "src/js/form-render.js",
+        "sass": [
+          "src/sass/form-render.scss"
+        ]
+      },
+      "site": [
+        "demo/assets/sass/site.scss"
+      ]
+    },
+    "fontServer": "https://fontello.com",
+    "fontelloToken": "09d648f01d6c57cb9f9b8cc55043e0c0"
+  },
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env",
+        {
+          "targets": {
+            "browsers": [
+              "> 1%"
+            ]
+          },
+          "loose": true
+        }
+      ]
+    ],
+    "comments": false,
+    "plugins": [
+      "@babel/plugin-proposal-object-rest-spread",
+      "@babel/plugin-proposal-class-properties",
+      "@babel/plugin-proposal-nullish-coalescing-operator"
+    ]
+  },
+  "scripts": {
+    "build:analyze": "webpack --mode production --progress --config tools/webpack.config --analyze",
+    "build:plugins": "webpack --mode production --progress --config tools/webpack.plugins.config",
+    "build:vendor": "babel-node tools/build-vendor",
+    "build": "webpack --mode production --progress --config tools/webpack.config",
+    "build:all": "run-s build:plugins build:vendor build copy",
+    "build:dev": "webpack --mode development --progress --config tools/webpack.config",
+    "copy": "cp -a dist/* demo/assets/js/ && cp CONTRIBUTING.md docs/contributing.md && cp LICENSE docs/license.md && npm run copy:lang",
+    "copy:lang": "babel-node tools/copy-language-files",
+    "deploy:all": "run-s deploy:demo deploy:site",
+    "deploy:demo": "node tools/deploy-demo.js",
+    "deploy:site": "node tools/deploy-site.js",
+    "docs:build": "docker build --rm -t fb_docs .",
+    "docs:serve": "docker run -v \"`pwd`/docs/\":/usr/src/app/docs --rm -p 8123:8123 -it fb_docs",
+    "docs": "run-s docs:build docs:serve",
+    "font": "babel-node tools/icon-font",
+    "lint": "eslint ./src --ext .js || true",
+    "lint:fix": "eslint ./src --ext .js --fix",
+    "semantic-release": "semantic-release",
+    "start:devServer": "webpack-dev-server --mode development --config tools/webpack.config",
+    "prestart": "run-p build:vendor copy:lang",
+    "start": "npm run start:devServer",
+    "test": "jest --coverage",
+    "prepare": "[ \"$NODE_ENV\" = production ] && exit 0; husky install",
+    "pre-commit": "lint-staged"
+  },
+  "dependencies": {
+    "jquery": ">=3.4.1",
+    "jquery-ui-sortable": "*"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.22.10",
+    "@babel/core": "^7.22.10",
+    "@babel/node": "^7.22.10",
+    "@babel/plugin-proposal-class-properties": "^7.18.6",
+    "@babel/plugin-proposal-nullish-coalescing-operator": "^7.18.6",
+    "@babel/plugin-proposal-object-rest-spread": "^7.18.9",
+    "@babel/plugin-syntax-object-rest-spread": "^7.8.3",
+    "@babel/plugin-transform-destructuring": "^7.22.10",
+    "@babel/preset-env": "^7.11.0",
+    "@commitlint/cli": "^18.4.3",
+    "@commitlint/config-conventional": "^18.4.3",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/npm": "^10.0.5",
+    "autoprefixer": "^10.4.16",
+    "babel-eslint": "^10.1.0",
+    "babel-loader": "^8.1.0",
+    "clean-webpack-plugin": "^3.0.0",
+    "clui": "^0.3.6",
+    "colors": "^1.4.0",
+    "compression-webpack-plugin": "^10.0.0",
+    "concat-files": "^0.1.1",
+    "cross-env": "^7.0.2",
+    "css-loader": "^6.8.1",
+    "dompurify": "^3.0.6",
+    "eslint": "^7.7.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-loader": "^4.0.2",
+    "eslint-plugin-prettier": "^3.4.0",
+    "formbuilder-languages": "latest",
+    "fs-extra": "^9.0.1",
+    "html-webpack-harddisk-plugin": "^2.0.0",
+    "html-webpack-plugin": "^5.5.0",
+    "husky": "^8.0.3",
+    "inquirer": "^7.3.3",
+    "jest": "^29.5.0",
+    "jest-environment-jsdom": "^29.5.0",
+    "jest-scss-transform": "^1.0.3",
+    "lint-staged": "^15.2.0",
+    "mi18n": "^0.4.8",
+    "npm-run-all": "^4.1.5",
+    "opener": "^1.5.1",
+    "postcss-loader": "^7.3.3",
+    "replace-in-file": "^6.1.0",
+    "sass": "^1.49.9",
+    "sass-loader": "^9.0.3",
+    "semantic-release": "^21.1.1",
+    "semver": "^7.3.2",
+    "storage-available": "^1.1.0",
+    "style-loader": "^1.2.1",
+    "unzipper": "^0.10.11",
+    "webpack": "^5.88.0",
+    "webpack-bundle-analyzer": "^4.9.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.0",
+    "wrapper-webpack-plugin": "^2.2.2"
+  },
+  "engines": {},
+  "release": {
+    "branch": "master",
+    "verifyConditions": [
+      "@semantic-release/changelog",
+      "@semantic-release/npm",
+      "@semantic-release/git"
+    ],
+    "prepare": [
+      "@semantic-release/changelog",
+      "@semantic-release/npm",
+      "@semantic-release/git"
+    ]
+  },
+  "browserslist": [
+    "defaults"
+  ],
+  "jest": {
+    "collectCoverage": true,
+    "coverageDirectory": ".jest/coverage",
+    "coveragePathIgnorePatterns": [
+      "tests/",
+      "<rootDir>/src/js/control/index.js"
+    ],
+    "testEnvironment": "jsdom",
+    "testEnvironmentOptions": {
+      "resources": "usable",
+      "runScripts": "dangerously"
+    },
+    "setupFiles": [
+      "./tests/setup-jest.js"
+    ],
+    "moduleNameMapper": {
+      "\\.(css|less|scss)$": "<rootDir>/tests/__mocks__/styleMock.js"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "npm run lint:fix"
+    ]
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ],
+    "rules": {
+      "type-enum": [
+        2,
+        "always",
+        [
+          "build",
+          "chore",
+          "ci",
+          "docs",
+          "feat",
+          "fix",
+          "perf",
+          "refactor",
+          "revert",
+          "style",
+          "test",
+          "wip"
+        ]
+      ]
+    }
+  }
+}

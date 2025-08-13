@@ -1,0 +1,49 @@
+@import 'base/variables';
+
+.rendered-form {
+  * {
+    box-sizing: border-box;
+  }
+
+  &.formbuilder-embedded-bootstrap {
+    @import 'base/bs';
+  }
+  @import 'base/fields';
+  @import 'tooltip';
+  @import 'kc-toggle';
+
+  label {
+    font-weight: normal;
+  }
+
+  .form-group .formbuilder-required {
+    color: $error;
+  }
+
+  .other-option:checked + label {
+    input {
+      display: inline-block;
+    }
+  }
+
+  .other-val {
+    margin-left: 5px;
+    display: none;
+  }
+
+  .form-control {
+    &.number {
+      width: auto;
+    }
+
+    &[type='color'] {
+      width: 60px;
+      padding: 2px;
+      display: inline-block;
+    }
+
+    &[multiple] {
+      height: auto;
+    }
+  }
+}

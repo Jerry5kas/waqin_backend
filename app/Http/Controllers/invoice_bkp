@@ -1,0 +1,330 @@
+
+// public function createInvoiceOrProposal(Request $request)
+// {
+//     $validated = $request->validate([
+//         'tenant_schema' => 'required|string',
+//         'type' => 'required|string|in:invoice,proposal',
+//         'form_data' => 'required|array',
+//         'bill_items' => 'required|array',
+//         'tax_details' => 'required|array',
+//         'prescription_detail' => 'nullable|array',
+//         'employee_id' => 'nullable|integer',
+//     ]);
+
+//     $tenant = $validated['tenant_schema'];
+//     QueryHelper::initializeConnection($tenant);
+
+//     $now = now();
+
+//     $formData = $validated['form_data'];
+//     $attachments = $formData['attachment'] ?? [];
+//     $formDataClean = collect($formData)->except('attachment');
+
+//     // 🔍 Step 1: Get custom fields from raw request (not just validated ones)
+//     $excluded = ['tenant_schema', 'form_data', 'bill_items', 'tax_details', 'prescription_detail'];
+//     $customFields = collect($request->except($excluded));
+
+//     // ✅ Step 2: Build full invoice data (auto column creation)
+//     $invoiceData = $formDataClean
+//         ->merge($customFields)
+//         ->merge([
+//             'type' => $validated['type'],
+//             'status' => (empty($customFields['pending_amount']) || $customFields['pending_amount'] == 0) ? 1 : 0,
+//             'is_deleted' => 0,
+//             'created_at' => now(),
+//             'updated_at' => now(),
+//         ])
+//         ->toArray();
+
+//     $this->ensureTableAndColumnsExist('invoice_or_proposals', $invoiceData, 'tenant');
+//     $invoiceId = DB::connection('tenant')->table('invoice_or_proposals')->insertGetId($invoiceData);
+
+//     // 📎 Attachments
+//     if (!empty($attachments)) {
+//         $attachmentTemplate = [
+//             'invoice_id' => $invoiceId,
+//             'customer_id' => $formData['customer_id'] ?? null,
+//             'path' => '',
+//             'status' => 1,
+//             'is_deleted' => 0,
+//             'created_at' => $now,
+//             'updated_at' => $now,
+//         ];
+//         $this->ensureTableAndColumnsExist('attachments', $attachmentTemplate, 'tenant');
+
+//         foreach ($attachments as $base64Image) {
+//             if (preg_match('/^data:image\/(\w+);base64,/', $base64Image, $match)) {
+//                 $ext = strtolower($match[1]);
+//                 $imageData = base64_decode(substr($base64Image, strpos($base64Image, ',') + 1));
+//                 $imageName = 'IMG_' . uniqid() . '.' . $ext;
+//                 $path = "{$tenant}/attachments/{$imageName}";
+
+//                 Storage::disk('public')->put($path, $imageData);
+
+//                 $data = $attachmentTemplate;
+//                 $data['path'] = $path;
+//                 DB::connection('tenant')->table('attachments')->insert($data);
+//             }
+//         }
+//     }
+
+//     // 🧾 Items
+//     foreach ($validated['bill_items'] as $item) {
+//         $itemData = array_merge($item, [
+//             'invoice_id' => $invoiceId,
+//             'status' => 1,
+//             'is_deleted' => 0,
+//             'created_at' => $now,
+//             'updated_at' => $now,
+//         ]);
+//         $this->ensureTableAndColumnsExist('item_purchased', $itemData, 'tenant');
+//         DB::connection('tenant')->table('item_purchased')->insert($itemData);
+//     }
+
+//     // 💸 Tax
+//     foreach ($validated['tax_details'] as $tax) {
+//         $taxData = array_merge($tax, [
+//             'invoice_id' => $invoiceId,
+//             'status' => 1,
+//             'is_deleted' => 0,
+//             'created_at' => $now,
+//             'updated_at' => $now,
+//         ]);
+//         $this->ensureTableAndColumnsExist('tax', $taxData, 'tenant');
+//         DB::connection('tenant')->table('tax')->insert($taxData);
+//     }
+
+//     // 🧾 Prescription
+//     if (!empty($validated['prescription_detail'])) {
+//         $prescriptionData = array_merge($validated['prescription_detail'], [
+//             'invoice_id' => $invoiceId,
+//             'is_deleted' => 0,
+//             'created_at' => $now,
+//             'updated_at' => $now,
+//         ]);
+//         $this->ensureTableAndColumnsExist('prescription', $prescriptionData, 'tenant');
+//         DB::connection('tenant')->table('prescription')->insert($prescriptionData);
+//     }
+
+//     if (!empty($validated['employee_id'])) {
+//           $product = $service = [];
+//           foreach ($validated['bill_items'] as $item) {
+//               if (!isset($item['employee_percentage'], $item['amount'])) continue;
+
+//               $amt = floatval($item['amount'] ?? 0);
+//               $percent = floatval($item['employee_percentage']);
+//               $commission = round(($amt * $percent) / 100, 2);
+//               $entry = ['amount' => $amt, 'percentage' => $percent, 'commission' => $commission];
+
+//               if (!empty($item['product_id'])) {
+//                   $entry['product_id'] = $item['product_id'];
+//                   $product[] = $entry;
+//               }
+
+//               if (!empty($item['service_id'])) {
+//                   $entry['service_id'] = $item['service_id'];
+//                   $service[] = $entry;
+//               }
+//           }
+
+//           $commissionData = [
+//               'employee_id' => $validated['employee_id'],
+//               'invoice_id' => $invoiceId,
+//               'product' => json_encode($product),
+//               'service' => json_encode($service),
+//               'total_amount' => collect($product)->sum('commission') + collect($service)->sum('commission'),
+//               'status' => 1,
+//               'is_deleted' => 0,
+//               'created_at' => $now,
+//               'updated_at' => $now,
+//           ];
+
+//           $this->ensureTableAndColumnsExist('employee_comission', $commissionData, 'tenant');
+//           DB::connection('tenant')->table('employee_comission')->insert($commissionData);
+//       }
+
+//     Redis::del("invoice_or_proposals_{$tenant}");
+
+//     return response()->json([
+//         'message' => 'Invoice/Proposal created successfully.',
+//         'invoice_id' => $invoiceId,
+//     ], 200);
+// }
+public function createInvoiceOrProposal(Request $request)
+{
+    $validated = $request->validate([
+        'tenant_schema' => 'required|string',
+        'type' => 'required|string|in:invoice,proposal,order', // now includes order
+        'form_data' => 'required|array',
+        'bill_items' => 'required|array',
+        'tax_details' => 'required|array',
+        'prescription_detail' => 'nullable|array',
+        'employee_id' => 'nullable|integer',
+    ]);
+
+    $tenant = $validated['tenant_schema'];
+    QueryHelper::initializeConnection($tenant);
+    $now = now();
+
+    $formData = $validated['form_data'];
+    $attachments = $formData['attachment'] ?? [];
+    $formDataClean = collect($formData)->except('attachment');
+
+    // 🔍 Get custom fields
+    $excluded = ['tenant_schema', 'form_data', 'bill_items', 'tax_details', 'prescription_detail'];
+    $customFields = collect($request->except($excluded));
+
+    $type = $validated['type'];
+    $isInvoice = $type === 'invoice';
+    $isOrder = $type === 'order';
+
+    // ✅ Prepare invoice/order/proposal data
+    $invoiceData = $formDataClean
+        ->merge($customFields)
+        ->merge([
+            'type' => $type,
+            'status' => match (true) {
+                !$isInvoice => 0, // Order or Proposal
+                is_numeric($customFields['pending_amount']) && floatval($customFields['pending_amount']) > 0 => 1, // Partially Paid
+                default => 2, // Fully Paid
+            },
+            'is_deleted' => 0,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])
+        ->toArray();
+
+    $this->ensureTableAndColumnsExist('invoice_or_proposals', $invoiceData, 'tenant');
+    $invoiceId = DB::connection('tenant')->table('invoice_or_proposals')->insertGetId($invoiceData);
+
+    // 📎 Attachments
+    if (!empty($attachments)) {
+        $attachmentTemplate = [
+            'invoice_id' => $invoiceId,
+            'customer_id' => $formData['customer_id'] ?? null,
+            'path' => '',
+            'status' => 1,
+            'is_deleted' => 0,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ];
+        $this->ensureTableAndColumnsExist('attachments', $attachmentTemplate, 'tenant');
+
+        foreach ($attachments as $base64Image) {
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64Image, $match)) {
+                $ext = strtolower($match[1]);
+                $imageData = base64_decode(substr($base64Image, strpos($base64Image, ',') + 1));
+                $imageName = 'IMG_' . uniqid() . '.' . $ext;
+                $path = "{$tenant}/attachments/{$imageName}";
+
+                Storage::disk('public')->put($path, $imageData);
+
+                $data = $attachmentTemplate;
+                $data['path'] = $path;
+                DB::connection('tenant')->table('attachments')->insert($data);
+            }
+        }
+    }
+
+    // 🧾 Items
+    foreach ($validated['bill_items'] as $item) {
+        // If invoice, check inventory here (assuming 'item_id' and 'qty' exist)
+      if ($isInvoice && !empty($item['product_id'])) {
+            $product = DB::connection('tenant')->table('product-catalogs')
+                ->where('id', $item['product_id'])
+                ->where('is_inventory', 1)
+                ->first();
+            if ($product) {
+                $qty = (int) $item['qty'];
+                if ($product->available_quantity < $qty) {
+                    return response()->json([
+                        'message' => "Insufficient stock for product: {$product->title}",
+                    ], 200);
+                }
+                // Deduct available quantity
+                DB::connection('tenant')->table('product-catalogs')
+                    ->where('id', $item['product_id'])
+                    ->decrement('available_quantity', $qty);
+            }
+        }
+        $itemData = array_merge($item, [
+                'invoice_id' => $invoiceId,
+                'status' => 1,
+                'is_deleted' => 0,
+                'created_at' => $now,
+                'updated_at' => $now,
+        ]);
+        $this->ensureTableAndColumnsExist('item_purchased', $itemData, 'tenant');
+        DB::connection('tenant')->table('item_purchased')->insert($itemData);
+    }
+
+    // 💸 Tax
+    foreach ($validated['tax_details'] as $tax) {
+        $taxData = array_merge($tax, [
+            'invoice_id' => $invoiceId,
+            'status' => 1,
+            'is_deleted' => 0,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $this->ensureTableAndColumnsExist('tax', $taxData, 'tenant');
+        DB::connection('tenant')->table('tax')->insert($taxData);
+    }
+
+    // 🧾 Prescription
+    if (!empty($validated['prescription_detail'])) {
+        $prescriptionData = array_merge($validated['prescription_detail'], [
+            'invoice_id' => $invoiceId,
+            'is_deleted' => 0,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $this->ensureTableAndColumnsExist('prescription', $prescriptionData, 'tenant');
+        DB::connection('tenant')->table('prescription')->insert($prescriptionData);
+    }
+
+    // 👤 Commission only for invoice
+    if ($isInvoice && !empty($validated['employee_id'])) {
+        $product = $service = [];
+        foreach ($validated['bill_items'] as $item) {
+            if (!isset($item['employee_percentage'], $item['amount'])) continue;
+
+            $amt = floatval($item['amount'] ?? 0);
+            $percent = floatval($item['employee_percentage']);
+            $commission = round(($amt * $percent) / 100, 2);
+            $entry = ['amount' => $amt, 'percentage' => $percent, 'commission' => $commission];
+
+            if (!empty($item['product_id'])) {
+                $entry['product_id'] = $item['product_id'];
+                $product[] = $entry;
+            }
+
+            if (!empty($item['service_id'])) {
+                $entry['service_id'] = $item['service_id'];
+                $service[] = $entry;
+            }
+        }
+
+        $commissionData = [
+            'employee_id' => $validated['employee_id'],
+            'invoice_id' => $invoiceId,
+            'product' => json_encode($product),
+            'service' => json_encode($service),
+            'total_amount' => collect($product)->sum('commission') + collect($service)->sum('commission'),
+            'status' => 1,
+            'is_deleted' => 0,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ];
+
+        $this->ensureTableAndColumnsExist('employee_comission', $commissionData, 'tenant');
+        DB::connection('tenant')->table('employee_comission')->insert($commissionData);
+    }
+
+    Redis::del("invoice_or_proposals_{$tenant}");
+
+    return response()->json([
+        'message' => ucfirst($type) . ' created successfully.',
+        'invoice_id' => $invoiceId,
+    ], 200);
+}
