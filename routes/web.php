@@ -226,6 +226,10 @@ Route::middleware('auth')->group(function () {
     Route::get('manage-package/durations/activate/{id}', [PackageController::class, 'activateDuration']);
     Route::get('manage-package/durations/deactivate/{id}', [PackageController::class, 'deactivateDuration']);
 
+    // Assign Packages
+    Route::get('manage-package/assign-packages', [PackageController::class, 'assignPackages'])->name('assign-packages');
+    Route::post('manage-package/assign-packages/store', [PackageController::class, 'storeAssignedPackage']);
+
     // ENT Form Builder Routes
     Route::get('/ent-form-builder', [EntFormBuilderController::class, 'entFormBuilder'])->name('ent-form-builder');
     Route::get('/add_ent_builder_form', [EntFormBuilderController::class, 'addEntFormBuilder'])->name('add_ent_builder_form');

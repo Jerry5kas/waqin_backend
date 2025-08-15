@@ -254,10 +254,10 @@
 
         @if(Auth::user()->role == 2 || ($menuPermissions['Manage Packages'] ?? false))
         <li class="nav-item">
-            <a class="nav-link {{ request()->routeIs('features') || request()->routeIs('packages') || request()->routeIs('durations') ? 'active' : 'collapsed' }}" data-bs-toggle="collapse" href="#package-nav" aria-expanded="{{ request()->routeIs('features') || request()->routeIs('packages') || request()->routeIs('durations') ? 'true' : 'false' }}">
+            <a class="nav-link {{ request()->routeIs('features') || request()->routeIs('packages') || request()->routeIs('durations') || request()->routeIs('assign-packages') ? 'active' : 'collapsed' }}" data-bs-toggle="collapse" href="#package-nav" aria-expanded="{{ request()->routeIs('features') || request()->routeIs('packages') || request()->routeIs('durations') || request()->routeIs('assign-packages') ? 'true' : 'false' }}">
                 <i class="bi bi-box-seam"></i><span>Manage Packages</span><i class="bi bi-chevron-down ms-auto"></i>
             </a>
-            <ul id="package-nav" class="nav-content collapse {{ request()->routeIs('features') || request()->routeIs('packages') || request()->routeIs('durations') ? 'show' : '' }}" data-bs-parent="#sidebar-nav">
+            <ul id="package-nav" class="nav-content collapse {{ request()->routeIs('features') || request()->routeIs('packages') || request()->routeIs('durations') || request()->routeIs('assign-packages') ? 'show' : '' }}" data-bs-parent="#sidebar-nav">
                 <li>
                     <a class="nav-link {{ request()->routeIs('features') ? 'active' : '' }}" href="{{ route('features') }}">
                         <i class="bi bi-circle"></i><span>Features</span>
@@ -271,6 +271,11 @@
                 <li>
                     <a class="nav-link {{ request()->routeIs('durations') ? 'active' : '' }}" href="{{ route('durations') }}">
                         <i class="bi bi-circle"></i><span>Durations</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="nav-link {{ request()->routeIs('assign-packages') ? 'active' : '' }}" href="{{ route('assign-packages') }}">
+                        <i class="bi bi-circle"></i><span>Assign Packages</span>
                     </a>
                 </li>
             </ul>
